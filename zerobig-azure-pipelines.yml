@@ -1,0 +1,39 @@
+variables:
+- name: BuildParameters.mavenPOMFile
+  value: pom.xml
+name: $(date:yyyyMMdd)$(rev:.r)
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: main
+jobs:
+- job: Build
+  displayName: Build job
+  pool:
+    vmImage: ubuntu-16.04
+  steps:
+  - checkout: self
+  - task: Maven@3
+    displayName: Maven pom.xml
+    inputs:
+      mavenPOMFile: $(BuildParameters.mavenPOMFile)
+  - task: CopyFiles@2
+    displayName: 'Copy Files to: $(build.artifactstagingdirectory)'
+    condition: succeededOrFailed()
+    inputs:
+      SourceFolder: $(system.defaultworkingdirectory)
+      Contents: '**/*.jar'
+      TargetFolder: $(build.artifactstagingdirectory)
+  - task: Docker@2
+    displayName: buildAndPush
+    inputs:
+      containerRegistry: 71a9eccc-6659-48e6-a97a-77afb22379d0
+      repository: aks-spring-demo
+      Dockerfile: Dockerfile
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifact: drop'
+    condition: succeededOrFailed()
+    inputs:
+      PathtoPublish: k8s/deploy-svc.yaml
+...
