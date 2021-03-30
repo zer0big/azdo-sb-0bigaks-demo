@@ -7,7 +7,7 @@ trigger:
 - main
 
 pool:
-  name: zerodemo
+  name: Azure Pipelines
   demands: maven
 
 steps:
